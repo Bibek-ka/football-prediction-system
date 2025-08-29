@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fixtures | Football Prediction System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">Football Prediction</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link active" href="fixtures.html">Fixture</a></li>
+          <li class="nav-item"><a class="nav-link" href="table.html">Table</a></li>
+          <li class="nav-item"><a class="nav-link" href="analysis.html">Analytics</a></li>
+          <li class="nav-item"><a class="nav-link d-none" id="nav-login" href="login.html">Login</a></li>
+          <li class="nav-item"><a class="nav-link d-none" id="nav-signup" href="signup.html">Signup</a></li>
+          <li class="nav-item"><a class="nav-link d-none" id="nav-profile" href="profile.html">Profile</a></li>
+          <li class="nav-item"><a class="nav-link d-none" id="nav-dashboard" href="dashboard.html">Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Fixtures Table -->
+  <div class="container my-5">
+    <h2 class="mb-4 text-center">Upcoming Fixtures</h2>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover bg-white">
+        <thead class="table-dark">
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Home Team</th>
+            <th>Away Team</th>
+            <th>Venue</th>
+            <th>Predict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>2025-09-01</td>
+            <td>18:00</td>
+            <td>Manchester United</td>
+            <td>Chelsea</td>
+            <td>Old Trafford</td>
+            <td><button class="btn btn-primary btn-sm" onclick="makePrediction('Manchester United','Chelsea',1)">Predict</button></td>
+          </tr>
+          <tr>
+            <td>2025-09-02</td>
+            <td>20:00</td>
+            <td>Real Madrid</td>
+            <td>Barcelona</td>
+            <td>Santiago Bernabéu</td>
+            <td><button class="btn btn-primary btn-sm" onclick="makePrediction('Real Madrid','Barcelona',0)">Predict</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src
+  <script>
+  async function makePrediction(homeTeam, awayTeam, homeAdvantage){
+    const token = localStorage.getItem('access');
+    if(!token){ alert('Please login first'); window.location.href = 'login.html'; return; }
+    const features = {
+      home_team_strength: Math.random(),
+      away_team_strength: Math.random(),
+      home_advantage: homeAdvantage,
+      recent_form_diff: (Math.random()*2-1).toFixed(3)
+    };
+    try{
+      const res = await fetch('http://127.0.0.1:8000/api/predictions/predict/', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({features})
+      });
+      const data = await res.json();
+      if(!res.ok){ alert(data.detail || 'Prediction failed'); return; }
+      alert('Predicted: '+data.predicted_class);
+    }catch(e){ alert('Network error'); }
+  }
+  </script>
+  <script>
+  (function(){
+    const token = localStorage.getItem('access');
+    if(token){
+      const login = document.getElementById('nav-login');
+      const signup = document.getElementById('nav-signup');
+      const profile = document.getElementById('nav-profile');
+      const dashboard = document.getElementById('nav-dashboard');
+      if(login) login.classList.add('d-none');
+      if(signup) signup.classList.add('d-none');
+      if(profile) profile.classList.remove('d-none');
+      if(dashboard) dashboard.classList.remove('d-none');
+    }
+  })();
+  </script>
+  </body>
+  </html>

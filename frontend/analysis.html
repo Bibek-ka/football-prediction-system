@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Analytics | Football Prediction System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">Football Prediction</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="fixtures.html">Fixture</a></li>
+          <li class="nav-item"><a class="nav-link" href="table.html">Table</a></li>
+          <li class="nav-item"><a class="nav-link active" href="analysis.html">Analytics</a></li>
+          <li class="nav-item"><a class="nav-link d-none" id="nav-login" href="login.html">Login</a></li>
+          <li class="nav-item"><a class="nav-link d-none" id="nav-signup" href="signup.html">Signup</a></li>
+          <li class="nav-item"><a class="nav-link d-none" id="nav-profile" href="profile.html">Profile</a></li>
+          <li class="nav-item"><a class="nav-link d-none" id="nav-dashboard" href="dashboard.html">Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Analytics Content -->
+  <div class="container my-5">
+    <h2 class="mb-4 text-center">Analytics Dashboard</h2>
+
+    <div class="mb-3 d-flex align-items-center gap-2">
+      <button class="btn btn-outline-primary" id="load-synth">Load sample dataset</button>
+      <small class="text-muted">Imports a subset from synthetic_predictions.csv</small>
+    </div>
+    <div id="load-msg" class="mb-4"></div>
+
+    <div class="row g-4" id="metrics-root">
+      <div class="col-12"><canvas id="accuracyChart" height="90"></canvas></div>
+      <div class="col-md-6"><canvas id="confusionChart" height="240"></canvas></div>
+      <div class="col-md-6"><canvas id="f1Chart" height="240"></canvas></div>
+      <div class="col-12"><canvas id="rocChart" height="120"></canvas></div>
+      <div class="col-md-6"><canvas id="prChart" height="200"></canvas></div>
+      <div class="col-md-6"><canvas id="perClassCountsChart" height="200"></canvas></div>
+      <div class="col-md-6"><canvas id="predDistChart" height="200"></canvas></div>
+      <div class="col-md-6"><canvas id="actualDistChart" height="200"></canvas></div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Top Scoring Teams</h5>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">Manchester City</li>
+              <li class="list-group-item">Real Madrid</li>
+              <li class="list-group-item">Bayern Munich</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Recent Form</h5>
+            <p class="card-text">Manchester United: W-W-D-L-W</p>
+            <p class="card-text">Barcelona: W-L-W-W-D</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Predicted Champions</h5>
+            <p class="display-6 text-success">Manchester City</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap & Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <script>
+  // Show/hide nav items based on login state
+  (function(){
+    const token = localStorage.getItem('access');
+    if(token){
+      document.getElementById('nav-login')?.classList.add('d-none');
+      document.getElementById('nav-signup')?.classList.add('d-none');
+      document.getElementById('nav-profile')?.classList.remove('d-none');
+      document.getElementById('nav-dashboard')?.classList.remove('d-none');
+    }
+  })();
+
+  // Store chart instances so we can destroy before re-drawing (avoid overlay)
+  const charts = {};
+
+  // Render all charts from data
+  function renderCharts(data) {
+    const classes = ['Win','Draw','Loss'];
+
+    // Destroy old charts if exist
+    for(const key in charts){
+      charts[key].destroy();
+    }
+
+    // Accuracy Chart
+    if(document.getElementById('accuracyChart')){
+      charts.accuracyChart = new Chart(document.getElementById('accuracyChart'), {
+        type: 'bar',
+        data: {
+          labels: ['Train', 'Test'],
+          datasets: [{
+            label: 'Accuracy %',
+            data: [100*(data.train_accuracy||0), 100*(data.test_accuracy||data.accuracy||0)],
+            backgroundColor: ['#4e79a7', '#59a14f']
+          }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
+      });
+    }
+
+    // Confusion Matrix Chart
+    if(document.getElementById('confusionChart') && data.confusion_matrix && data.confusion_matrix.labels && data.confusion_matrix.matrix){
+      const cmLabels = data.confusion_matrix.labels;
+      const cm = data.confusion_matrix.matrix;
+      const flattened = [], xLabels = [];
+      cm.forEach((row, i) => {
+        row.forEach((val, j) => {
+          flattened.push(val);
+          xLabels.push(`${cmLabels[i]}→${cmLabels[j]}`);
+        });
+      });
+      charts.confusionChart = new Chart(document.getElementById('confusionChart'), {
+        type: 'bar',
+        data: { labels: xLabels, datasets: [{ label: 'Count', data: flattened, backgroundColor: '#f28e2b' }] },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+    }
+
+    // F1 Score Chart
+    if(document.getElementById('f1Chart')){
+      const f1Clean = classes.map(c => (data.classification_report?.[c]?.f1_score || data.classification_report?.[c]?.f1 || 0));
+      charts.f1Chart = new Chart(document.getElementById('f1Chart'), {
+        type: 'bar',
+        data: { labels: classes, datasets: [{ label: 'F1 Score', data: f1Clean.map(v => 100*v), backgroundColor: '#e15759' }] },
+        options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
+      });
+    }
+
+    // Precision & Recall Chart
+    if(document.getElementById('prChart')){
+      const precision = classes.map(c => (data.classification_report?.[c]?.precision || 0));
+      const recall = classes.map(c => (data.classification_report?.[c]?.recall || 0));
+      charts.prChart = new Chart(document.getElementById('prChart'), {
+        type: 'bar',
+        data: {
+          labels: classes,
+          datasets: [
+            { label: 'Precision %', data: precision.map(v=>100*v), backgroundColor: '#4e79a7' },
+            { label: 'Recall %', data: recall.map(v=>100*v), backgroundColor: '#59a14f' }
+          ]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
+      });
+    }
+
+    // Per Class Counts Chart
+    if(document.getElementById('perClassCountsChart')){
+      const counts = data.per_class_counts || {};
+      const tp = classes.map(c => counts[c]?.tp || 0);
+      const tn = classes.map(c => counts[c]?.tn || 0);
+      const fp = classes.map(c => counts[c]?.fp || 0);
+      const fn = classes.map(c => counts[c]?.fn || 0);
+      charts.perClassCountsChart = new Chart(document.getElementById('perClassCountsChart'), {
+        type: 'bar',
+        data: {
+          labels: classes,
+          datasets: [
+            { label: 'TP', data: tp, backgroundColor: '#59a14f' },
+            { label: 'TN', data: tn, backgroundColor: '#76b7b2' },
+            { label: 'FP', data: fp, backgroundColor: '#e15759' },
+            { label: 'FN', data: fn, backgroundColor: '#f28e2b' }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    // ROC Curve Chart
+    if(document.getElementById('rocChart') && data.roc?.macro && data.roc.macro.fpr && data.roc.macro.tpr){
+      const macro = data.roc.macro;
+      charts.rocChart = new Chart(document.getElementById('rocChart'), {
+        type: 'line',
+        data: {
+          labels: macro.fpr,
+          datasets: [{
+            label: `ROC AUC=${(macro.auc||0).toFixed(3)}`,
+            data: macro.tpr,
+            borderColor: '#76b7b2',
+            fill: false,
+            cubicInterpolationMode: 'monotone',
+            tension: 0.4,
+            parsing: {
+              xAxisKey: 'x',
+              yAxisKey: 'y'
+            }
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { type: 'linear', min: 0, max: 1, title: { display: true, text: 'False Positive Rate' } },
+            y: { min: 0, max: 1, title: { display: true, text: 'True Positive Rate' } }
+          }
+        }
+      });
+    }
+
+    // Prediction vs Actual Pie Charts
+    const pred = data.distribution?.predicted || {};
+    const act = data.distribution?.actual || {};
+    if(document.getElementById('predDistChart')){
+      charts.predDistChart = new Chart(document.getElementById('predDistChart'), {
+        type: 'pie',
+        data: {
+          labels: classes,
+          datasets: [{ data: classes.map(k => pred[k]||0), backgroundColor: ['#4e79a7','#f28e2b','#e15759'] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Predicted Distribution' } } }
+      });
+    }
+    if(document.getElementById('actualDistChart')){
+      charts.actualDistChart = new Chart(document.getElementById('actualDistChart'), {
+        type: 'pie',
+        data: {
+          labels: classes,
+          datasets: [{ data: classes.map(k => act[k]||0), backgroundColor: ['#59a14f','#76b7b2','#f28e2b'] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Actual Distribution' } } }
+      });
+    }
+  }
+
+  // Fetch metrics from API and render
+  async function fetchMetrics() {
+    const metricsRoot = document.getElementById('metrics-root');
+    metricsRoot.style.opacity = '0.5';
+
+    try {
+      const response = await fetch('/api/predictions/metrics/');
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      const data = await response.json();
+      renderCharts(data);
+    } catch (err) {
+      alert('Failed to load metrics: ' + err.message);
+      console.error(err);
+    } finally {
+      metricsRoot.style.opacity = '1';
+    }
+  }
+
+  // Load synthetic dataset on button click
+  document.getElementById('load-synth').addEventListener('click', async function() {
+    const btn = this;
+    const msgDiv = document.getElementById('load-msg');
+
+    btn.disabled = true;
+    msgDiv.textContent = 'Importing sample dataset...';
+
+    try {
+      const response = await fetch('/api/predictions/load-synthetic/', { method: 'POST' });
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      const result = await response.json();
+
+      if(result.success){
+        msgDiv.innerHTML = `<div class="alert alert-success">Sample dataset imported successfully. Reloading metrics...</div>`;
+        await fetchMetrics();
+      } else {
+        msgDiv.innerHTML = `<div class="alert alert-warning">${result.error || 'Failed to import dataset'}</div>`;
+      }
+    } catch(err) {
+      msgDiv.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // Initial load metrics
+  fetchMetrics();
+
+  </script>
+</body>
+</html>
