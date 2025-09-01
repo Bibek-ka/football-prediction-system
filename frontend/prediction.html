@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Football Prediction System</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+
+    body {
+      background: #0d1117;
+      font-family: 'Inter', sans-serif;
+      color: #c9d1d9;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .card {
+      background: #161b22;
+      padding: 2.5rem 3rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      max-width: 480px;
+      width: 100%;
+      border: 1px solid #30363d;
+    }
+
+    h1 {
+      font-weight: 800;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      color: #58a6ff;
+      text-shadow: 0 0 10px #58a6ff88;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    label {
+      font-weight: 600;
+      color: #8b949e;
+      margin-bottom: 0.4rem;
+      display: block;
+      user-select: none;
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 0.65rem 1rem;
+      font-size: 1rem;
+      border: 1.5px solid #30363d;
+      border-radius: 8px;
+      background: #0d1117;
+      color: #c9d1d9;
+      transition: border-color 0.3s ease;
+      font-family: inherit;
+    }
+
+    input[type="number"]::placeholder {
+      color: #8b949e;
+    }
+
+    input[type="number"]:focus,
+    select:focus {
+      border-color: #58a6ff;
+      outline: none;
+      box-shadow: 0 0 8px #58a6ffaa;
+    }
+
+    button {
+      margin-top: 1rem;
+      padding: 0.85rem;
+      font-weight: 700;
+      font-size: 1.15rem;
+      background-color: #238636;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+      text-shadow: 0 1px 2px #166534bb;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #2ea043;
+    }
+
+    button:disabled {
+      background-color: #94d3a2;
+      cursor: not-allowed;
+    }
+
+    #result {
+      margin-top: 2rem;
+      padding: 1rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      text-align: center;
+      user-select: none;
+      display: none;
+    }
+
+    #result.success {
+      background-color: #23863622;
+      color: #238636;
+      border: 1.5px solid #238636aa;
+      text-shadow: 0 0 4px #238636bb;
+    }
+
+    #result.error {
+      background-color: #bd2c2c22;
+      color: #bd2c2c;
+      border: 1.5px solid #bd2c2caa;
+      text-shadow: 0 0 4px #bd2c2cbb;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="main">
+    <h1>Football Prediction System</h1>
+    <form id="prediction-form" novalidate>
+      <div>
+        <label for="homeStrength">Home Team Strength (1-10)</label>
+        <input
+          type="number"
+          id="homeStrength"
+          name="homeStrength"
+          placeholder="Enter Home Team Strength"
+          min="1"
+          max="10"
+          required
+          autocomplete="off"
+        />
+      </div>
+
+      <div>
+        <label for="awayStrength">Away Team Strength (1-10)</label>
+        <input
+          type="number"
+          id="awayStrength"
+          name="awayStrength"
+          placeholder="Enter Away Team Strength"
+          min="1"
+          max="10"
+          required
+          autocomplete="off"
+        />
+      </div>
+
+      <div>
+        <label for="venue">Match Venue</label>
+        <select id="venue" name="venue" required>
+          <option value="" disabled selected>Select venue</option>
+          <option value="home">Home</option>
+          <option value="away">Away</option>
+          <option value="neutral">Neutral</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="weather">Weather Condition</label>
+        <select id="weather" name="weather" required>
+          <option value="" disabled selected>Select weather</option>
+          <option value="sunny">Sunny</option>
+          <option value="rainy">Rainy</option>
+          <option value="cloudy">Cloudy</option>
+          <option value="snowy">Snowy</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="league">League</label>
+        <select id="league" name="league" required>
+          <option value="" disabled selected>Select league</option>
+          <option value="premier_league">Premier League</option>
+          <option value="la_liga">La Liga</option>
+          <option value="serie_a">Serie A</option>
+          <option value="bundesliga">Bundesliga</option>
+          <option value="ligue_1">Ligue 1</option>
+        </select>
+      </div>
+
+      <button type="submit">Predict</button>
+    </form>
+
+    <div id="result" aria-live="polite"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('prediction-form');
+    const resultDiv = document.getElementById('result');
+    const button = form.querySelector('button');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Reset UI
+      resultDiv.textContent = '';
+      resultDiv.style.display = 'none';
+      resultDiv.className = '';
+
+      button.disabled = true;
+      button.textContent = 'Predicting...';
+
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((v, k) => data[k] = v);
+
+      try {
+        const res = await fetch('http://localhost:5000/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        const json = await res.json();
+
+        if (res.ok) {
+          resultDiv.textContent = `⚽ Prediction: ${json.prediction}`;
+          resultDiv.classList.add('success');
+        } else {
+          resultDiv.textContent = `❌ Error: ${json.error || 'Something went wrong'}`;
+          resultDiv.classList.add('error');
+        }
+      } catch {
+        resultDiv.textContent = '❌ Unable to connect to prediction service.';
+        resultDiv.classList.add('error');
+      } finally {
+        resultDiv.style.display = 'block';
+        button.disabled = false;
+        button.textContent = 'Predict';
+      }
+    });
+  </script>
+</body>
+</html>

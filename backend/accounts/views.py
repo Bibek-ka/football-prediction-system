@@ -9,6 +9,15 @@ from .models import EmailVerificationCode
 import random
 
 
+from django.shortcuts import render
+from django.http import JsonResponse
+
+def load_synthetic_dataset(request):
+    
+    data = {"message": "Synthetic dataset loaded successfully."}
+    return JsonResponse(data)
+
+
 User = get_user_model()
 
 
