@@ -1,0 +1,172 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Sign Up | Football Match Prediction{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary: #3d5a80;
+    --accent: #ee6c4d;
+    --dark: #293241;
+}
+
+body {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--dark) 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.signup-container {
+    width: 100%;
+    max-width: 500px;
+}
+
+.form-box {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.logo i {
+    font-size: 2.5rem;
+    color: var(--accent);
+}
+
+h2 { text-align: center; margin-bottom: 1.8rem; }
+
+.btn-signup {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: white;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.btn-signup:hover { transform: translateY(-2px); }
+
+.alert { border-radius: 8px; padding: 0.8rem 1.2rem; margin-bottom: 1.2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="signup-container">
+    <div class="form-box">
+        <div class="logo">
+            <i class="fa-solid fa-futbol"></i>
+        </div>
+        <h2>Create Your Account</h2>
+        
+        <div id="alert-container"></div>
+        
+        <form id="signup-form">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="username" required placeholder="Enter your username">
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="email" name="email" required placeholder="Enter your email">
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required placeholder="Create a strong password">
+            </div>
+            
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label">Confirm Password</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required placeholder="Confirm your password">
+            </div>
+            
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="terms" required>
+                <label class="form-check-label" for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+            </div>
+            
+            <button type="submit" class="btn btn-signup" id="signup-button">Sign Up</button>
+        </form>
+        
+        <p class="switch-link text-center mt-3">
+            Already have an account? <a href="{% url 'login' %}">Login here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const signupForm = document.getElementById('signup-form');
+    const signupButton = document.getElementById('signup-button');
+    const passwordToggle = document.getElementById('password-toggle');
+    const confirmPasswordToggle = document.getElementById('confirm-password-toggle');
+
+    function setupPasswordToggle(toggle, inputId) {
+        toggle.addEventListener('click', function() {
+            const input = document.getElementById(inputId);
+            const icon = this.querySelector('i');
+            input.type = input.type === 'password' ? 'text' : 'password';
+            icon.classList.toggle('fa-eye-slash');
+            icon.classList.toggle('fa-eye');
+        });
+    }
+
+    setupPasswordToggle(passwordToggle, 'password');
+    setupPasswordToggle(confirmPasswordToggle, 'confirm_password');
+
+    signupForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const username = document.getElementById('username').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const confirm = document.getElementById('confirm_password').value.trim();
+
+        if (password !== confirm) {
+            alert('Passwords do not match');
+            return;
+        }
+
+        signupButton.disabled = true;
+
+        try {
+            const response = await fetch('/api/auth/register/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password, role: 'user' })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Registration successful! You can now log in.');
+                window.location.href = '/login/';
+            } else {
+                alert(data.detail || 'Registration failed');
+            }
+        } catch (err) {
+            alert('Network error. Please try again.');
+        } finally {
+            signupButton.disabled = false;
+        }
+    });
+});
+
+</script>
+{% endblock %}

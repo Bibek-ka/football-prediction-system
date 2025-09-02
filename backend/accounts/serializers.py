@@ -25,3 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ("id", "username", "email", "role", "is_email_verified")
 
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()

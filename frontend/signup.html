@@ -373,16 +373,39 @@ document.addEventListener('DOMContentLoaded', function() {
     signupButton.disabled = true;
     
     try {
-      // In a real application, this would call your backend to send verification email
-      const response = await mockSendVerificationCode(email);
+      // Register user with backend
+      const response = await fetch('http://127.0.0.1:8000/api/auth/register/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username,
+          email: email,
+          password: password,
+          role: 'user'
+        })
+      });
       
-      if (response.success) {
+      const data = await response.json();
+      
+      if (response.ok) {
         // Show verification section
         signupSection.style.display = 'none';
         verificationSection.style.display = 'block';
         emailDisplay.textContent = email;
+        showAlert('Registration successful! Please check your email for verification code.', 'success');
       } else {
-        showAlert(response.message || 'Failed to send verification code. Please try again.', 'danger');
+        // Handle validation errors
+        if (data.username) {
+          showAlert(`Username: ${data.username[0]}`, 'danger');
+        } else if (data.email) {
+          showAlert(`Email: ${data.email[0]}`, 'danger');
+        } else if (data.password) {
+          showAlert(`Password: ${data.password[0]}`, 'danger');
+        } else {
+          showAlert(data.detail || 'Registration failed. Please try again.', 'danger');
+        }
       }
     } catch (error) {
       showAlert('Network error. Please check your connection and try again.', 'danger');
@@ -422,25 +445,47 @@ document.addEventListener('DOMContentLoaded', function() {
     verifyButton.disabled = true;
     
     try {
-      // In a real application, this would verify the code with your backend
-      const response = await mockVerifyCode(userData.email, verificationCode);
+      // First, we need to login to get a token for verification
+      const loginResponse = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: userData.username,
+          password: userData.password
+        })
+      });
       
-      if (response.success) {
-        // Complete registration
-        const registrationResponse = await mockCompleteRegistration(userData);
+      const loginData = await loginResponse.json();
+      
+      if (loginResponse.ok) {
+        // Now verify the code using the token
+        const verifyResponse = await fetch('http://127.0.0.1:8000/api/auth/verify-code/', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${loginData.access}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            code: verificationCode
+          })
+        });
         
-        if (registrationResponse.success) {
-          showAlert('Registration successful! Redirecting to login page...', 'success');
+        const verifyData = await verifyResponse.json();
+        
+        if (verifyResponse.ok) {
+          showAlert('Email verified successfully! Redirecting to login page...', 'success');
           
-          // Simulate redirect to login page after a delay
+          // Redirect to login page after a delay
           setTimeout(() => {
             window.location.href = 'login.html';
           }, 1500);
         } else {
-          showAlert(registrationResponse.message || 'Registration failed. Please try again.', 'danger');
+          showAlert(verifyData.detail || 'Invalid verification code. Please try again.', 'danger');
         }
       } else {
-        showAlert(response.message || 'Invalid verification code. Please try again.', 'danger');
+        showAlert('Login failed. Please try again.', 'danger');
       }
     } catch (error) {
       showAlert('Verification error. Please try again.', 'danger');
@@ -461,20 +506,46 @@ document.addEventListener('DOMContentLoaded', function() {
     resendCodeLink.style.pointerEvents = 'none';
     
     try {
-      // In a real application, this would call your backend to resend the code
-      const response = await mockSendVerificationCode(userData.email);
+      // Login to get token for resending code
+      const loginResponse = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: userData.username,
+          password: userData.password
+        })
+      });
       
-      if (response.success) {
-        showAlert('Verification code sent successfully!', 'success');
-        
-        // Clear previous inputs
-        const inputs = document.querySelectorAll('.verification-input input');
-        inputs.forEach(input => {
-          input.value = '';
+      const loginData = await loginResponse.json();
+      
+      if (loginResponse.ok) {
+        // Resend verification code
+        const response = await fetch('http://127.0.0.1:8000/api/auth/send-code/', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${loginData.access}`,
+            'Content-Type': 'application/json',
+          }
         });
-        inputs[0].focus();
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          showAlert('Verification code sent successfully!', 'success');
+          
+          // Clear previous inputs
+          const inputs = document.querySelectorAll('.verification-input input');
+          inputs.forEach(input => {
+            input.value = '';
+          });
+          inputs[0].focus();
+        } else {
+          showAlert(data.detail || 'Failed to resend verification code. Please try again.', 'danger');
+        }
       } else {
-        showAlert(response.message || 'Failed to resend verification code. Please try again.', 'danger');
+        showAlert('Login failed. Please try again.', 'danger');
       }
     } catch (error) {
       showAlert('Network error. Please check your connection and try again.', 'danger');
@@ -502,49 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // Mock API functions for demonstration
-  // Replace these with actual API calls to your backend
-  
-  async function mockSendVerificationCode(email) {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Simulate successful code sending
-    return {
-      success: true,
-      message: 'Verification code sent'
-    };
-  }
-  
-  async function mockVerifyCode(email, code) {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // For demo purposes, any code ending with 1 is invalid
-    if (code.endsWith('1')) {
-      return {
-        success: false,
-        message: 'Invalid verification code'
-      };
-    }
-    
-    // Simulate successful verification
-    return {
-      success: true,
-      message: 'Email verified successfully'
-    };
-  }
-  
-  async function mockCompleteRegistration(userData) {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Simulate successful registration
-    return {
-      success: true,
-      message: 'User registered successfully'
-    };
-  }
+
 });
 </script>
 </body>

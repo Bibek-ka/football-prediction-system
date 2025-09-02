@@ -172,14 +172,27 @@
             loginButton.disabled = true;
             
             try {
-                // In a real application, this would call your authentication endpoint
-                const response = await mockLogin(username, password);
+                const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
                 
-                if (response.success) {
-                    if (response.verified) {
-                        // Store tokens and redirect
-                        localStorage.setItem('access', response.access);
-                        localStorage.setItem('refresh', response.refresh);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store tokens and user data
+                    localStorage.setItem('access', data.access);
+                    localStorage.setItem('refresh', data.refresh);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    if (data.email_verified) {
+                        // Redirect to dashboard/profile
                         window.location.href = 'profile.html';
                     } else {
                         // Show verification reminder
@@ -187,7 +200,7 @@
                         showAlert('Please verify your email address to complete login', 'warning');
                     }
                 } else {
-                    showAlert(response.message || 'Login failed. Please check your credentials.', 'danger');
+                    showAlert(data.detail || 'Login failed. Please check your credentials.', 'danger');
                 }
             } catch(err){
                 console.error('Network error:', err);
@@ -204,67 +217,34 @@
         resendVerificationLink.addEventListener('click', async function(e) {
             e.preventDefault();
             
-            const username = document.getElementById('username').value.trim();
-            
-            if (!username) {
-                showAlert('Please enter your username first', 'warning');
+            const token = localStorage.getItem('access');
+            if (!token) {
+                showAlert('Please login first', 'warning');
                 return;
             }
             
             try {
-                // In a real application, this would call your backend to resend verification
-                const response = await mockResendVerification(username);
+                const response = await fetch('http://127.0.0.1:8000/api/auth/send-code/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
                 
-                if (response.success) {
+                const data = await response.json();
+                
+                if (response.ok) {
                     showAlert('Verification email sent. Please check your inbox.', 'success');
                 } else {
-                    showAlert(response.message || 'Failed to resend verification email.', 'danger');
+                    showAlert(data.detail || 'Failed to resend verification email.', 'danger');
                 }
             } catch (error) {
                 showAlert('Network error. Please try again later.', 'danger');
             }
         });
         
-        // Mock API functions for demonstration
-        // Replace these with actual API calls to your backend
-        
-        async function mockLogin(username, password) {
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // For demo purposes, specific credentials
-            if (username === 'unverified' && password === 'password') {
-                return {
-                    success: true,
-                    verified: false,
-                    message: 'Email not verified'
-                };
-            }
-            
-            if (username === 'demo' && password === 'password') {
-                return {
-                    success: true,
-                    verified: true,
-                    access: 'mock-access-token',
-                    refresh: 'mock-refresh-token'
-                };
-            }
-            
-            return {
-                success: false,
-                message: 'Invalid username or password'
-            };
-        }
-        
-        async function mockResendVerification(username) {
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            return {
-                success: true,
-                message: 'Verification email sent'
-            };
-        }
+
     });
     </script>
 </body>

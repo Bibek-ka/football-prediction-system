@@ -1,0 +1,76 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Prediction | Football Match Prediction{% endblock %}
+
+{% block content %}
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'index' %}">Football Prediction</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'fixtures' %}">Fixture</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'table' %}">Table</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'analysis' %}">Analytics</a></li>
+                <li class="nav-item"><a class="nav-link active" href="{% url 'prediction' %}">Prediction</a></li>
+                <li class="nav-item"><a class="nav-link d-none" id="nav-login" href="{% url 'login' %}">Login</a></li>
+                <li class="nav-item"><a class="nav-link d-none" id="nav-signup" href="{% url 'signup' %}">Signup</a></li>
+                <li class="nav-item"><a class="nav-link d-none" id="nav-profile" href="{% url 'profile' %}">Profile</a></li>
+                <li class="nav-item"><a class="nav-link d-none" id="nav-dashboard" href="{% url 'dashboard' %}">Dashboard</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Prediction Content -->
+<div class="container my-5">
+    <h2 class="mb-4 text-center">Match Predictions</h2>
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Make a Prediction</h5>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="homeTeam" class="form-label">Home Team</label>
+                            <select class="form-select" id="homeTeam">
+                                <option>Select Home Team</option>
+                                <option>Manchester United</option>
+                                <option>Liverpool</option>
+                                <option>Arsenal</option>
+                                <option>Chelsea</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="awayTeam" class="form-label">Away Team</label>
+                            <select class="form-select" id="awayTeam">
+                                <option>Select Away Team</option>
+                                <option>Manchester City</option>
+                                <option>Tottenham</option>
+                                <option>Newcastle</option>
+                                <option>Brighton</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Generate Prediction</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize navigation
+    FootballApp.initNavigation();
+});
+</script>
+{% endblock %}

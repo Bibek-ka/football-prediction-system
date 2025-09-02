@@ -1,0 +1,158 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Debug | Football Match Prediction{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="text-center">API Debug Test</h4>
+                </div>
+                <div class="card-body">
+                    <div id="debug-output" class="mb-3">
+                        <h5>Debug Information:</h5>
+                        <div id="debug-info"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <button class="btn btn-primary" onclick="testAPI()">Test API Connection</button>
+                        <button class="btn btn-success" onclick="testRegister()">Test Register</button>
+                        <button class="btn btn-info" onclick="testLogin()">Test Login</button>
+                        <button class="btn btn-warning" onclick="testMe()">Test /me/ Endpoint</button>
+                    </div>
+                    
+                    <div id="test-results" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function log(message) {
+    const debugInfo = document.getElementById('debug-info');
+    debugInfo.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+    console.log(message);
+}
+
+function showResult(title, data) {
+    const results = document.getElementById('test-results');
+    results.innerHTML += `
+        <div class="alert alert-info">
+            <h6>${title}</h6>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+        </div>
+    `;
+}
+
+async function testAPI() {
+    log('Testing API connection...');
+    try {
+        const response = await fetch('/api/');
+        const data = await response.json();
+        log('API connection successful');
+        showResult('API Status', data);
+    } catch (error) {
+        log('API connection failed: ' + error.message);
+        showResult('API Error', { error: error.message });
+    }
+}
+
+async function testRegister() {
+    log('Testing user registration...');
+    try {
+        const response = await fetch('/api/auth/register/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: 'debuguser' + Date.now(),
+                email: 'debug@example.com',
+                password: 'DebugPass123',
+                role: 'user'
+            })
+        });
+        
+        const data = await response.json();
+        log('Registration test completed with status: ' + response.status);
+        showResult('Registration Result', { status: response.status, data: data });
+    } catch (error) {
+        log('Registration test failed: ' + error.message);
+        showResult('Registration Error', { error: error.message });
+    }
+}
+
+async function testLogin() {
+    log('Testing user login...');
+    try {
+        const response = await fetch('/api/auth/login/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: 'testuser',
+                password: 'TestPass123'
+            })
+        });
+        
+        const data = await response.json();
+        log('Login test completed with status: ' + response.status);
+        showResult('Login Result', { status: response.status, data: data });
+        
+        // Store token for further tests
+        if (data.access) {
+            localStorage.setItem('access', data.access);
+            localStorage.setItem('refresh', data.refresh);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            log('Tokens stored in localStorage');
+        }
+    } catch (error) {
+        log('Login test failed: ' + error.message);
+        showResult('Login Error', { error: error.message });
+    }
+}
+
+async function testMe() {
+    log('Testing /me/ endpoint...');
+    const token = localStorage.getItem('access');
+    
+    if (!token) {
+        log('No access token found. Please login first.');
+        showResult('Me Test Error', { error: 'No access token found. Please login first.' });
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/auth/me/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        log('Me test completed with status: ' + response.status);
+        showResult('Me Result', { status: response.status, data: data });
+    } catch (error) {
+        log('Me test failed: ' + error.message);
+        showResult('Me Error', { error: error.message });
+    }
+}
+
+// Initialize debug info
+document.addEventListener('DOMContentLoaded', function() {
+    log('Debug page loaded');
+    log('API Base URL: ' + window.location.origin + '/api');
+    log('Current URL: ' + window.location.href);
+    log('User Agent: ' + navigator.userAgent);
+});
+</script>
+{% endblock %}
