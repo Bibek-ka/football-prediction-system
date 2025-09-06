@@ -1,0 +1,260 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Football Prediction</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background-color: #0a0a0a;
+      color: white;
+    }
+
+    .header-image {
+      width: 100%;
+      height: 100vh;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    .header-overlay {
+      position: relative;
+      padding: 2rem;
+      background: rgba(0,0,0,0.5);
+      height: 100vh;
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: 0;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      background: #1c1c1c;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      transition: 0.3s;
+    }
+
+    .nav-links a:hover {
+      background-color: #00ff99;
+      color: black;
+    }
+
+    .header-text {
+      text-align: center;
+      margin-top: 30vh;
+    }
+
+    .header-text h2 {
+      font-size: 3rem;
+      line-height: 1.2;
+    }
+
+    .dark-section {
+      background-color: #111;
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+
+    .buttons {
+      margin-top: 2rem;
+    }
+
+    .btn {
+      padding: 1rem 2rem;
+      border-radius: 5px;
+      font-weight: bold;
+      text-decoration: none;
+      margin: 0 0.5rem;
+      display: inline-block;
+    }
+
+    .btn-blue {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .btn-pink {
+      background-color: #ff4f81;
+      color: white;
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .card {
+      background: #1c1c1c;
+      padding: 2rem;
+      max-width: 600px;
+      border-radius: 8px;
+    }
+
+    .card-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .access .device-images img {
+      width: 200px;
+      margin: 1rem;
+      border-radius: 10px;
+    }
+
+    .newsletter-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 400px;
+      margin: auto;
+    }
+
+    .newsletter-form input {
+      padding: 0.75rem;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .newsletter-form button {
+      padding: 0.75rem;
+      background-color: #00ff99;
+      color: black;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .d-none {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <img src="{% static 'images/Football stadium.avif' %}" alt="Football stadium" class="header-image" />
+
+  <div class="header-overlay">
+    <nav class="nav-container">
+      <ul class="nav-links">
+        <li><a href="{% url 'fixtures' %}">Fixture</a></li>
+        <li><a href="{% url 'table' %}">Table</a></li>
+        <li><a href="{% url 'analysis' %}">Analytics</a></li>
+        <li><a href="{% url 'prediction' %}" id="nav-prediction" class="d-none">Prediction</a></li>
+        <li><a href="{% url 'login' %}" id="nav-login">Login</a></li>
+        <li><a href="{% url 'signup' %}" id="nav-signup">Signup</a></li>
+        <li><a href="{% url 'edit_profile' %}" id="nav-profile" class="d-none"><span id="nav-initials">U</span> Profile</a></li>
+        <li><a href="{% url 'dashboard' %}" id="nav-dashboard" class="d-none">Dashboard</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-text">
+      <h2>PREDICT GAME <br />ENJOY FOOTBALL<br /> WITH US</h2>
+    </div>
+  </div>
+</header>
+
+<section class="intro dark-section">
+  <div class="intro-content">
+    <h1>Explore and analyse football the way U like</h1>
+    <p>
+      Our aim is to help you with the latest technology to fully understand football. Explore how your favorite teams and players perform.
+    </p>
+    <div class="buttons">
+      <a href="#" class="btn btn-blue">Download for Android</a>
+      <a href="#" class="btn btn-pink">Download for iOS</a>
+    </div>
+  </div>
+</section>
+
+<section class="cards dark-section">
+  <div class="card">
+    <div class="card-icon">📊</div>
+    <h3>Personalisable Analytics Platform</h3>
+    <p>Our analytics engine is dynamic, providing real-time updates on any ongoing game event.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon">🎯</div>
+    <h3>Game Outcome Predictions</h3>
+    <p>We back predictions with a custom-built analytics engine that allows in-depth analysis.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon">📈</div>
+    <h3>League Outcome Predictions</h3>
+    <p>Forecasts for Premier League, La Liga, Bundesliga, and more.</p>
+  </div>
+</section>
+
+<section class="access dark-section">
+  <h2>Access Uanalyse anywhere</h2>
+  <p>Check live scores and insights from any device, anywhere.</p>
+  <div class="device-images">
+    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="Tablet" />
+    <img src="https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=400&q=80" alt="Mobile phone" />
+  </div>
+</section>
+
+<section class="newsletter dark-section">
+  <h2>Sign Up For Newsletter</h2>
+  <form class="newsletter-form">
+    <input type="text" placeholder="Name" required />
+    <input type="email" placeholder="Email" required />
+    <button type="submit">Subscribe</button>
+  </form>
+</section>
+
+<!-- JWT Navigation Toggle -->
+<script>
+  (function () {
+    const token = localStorage.getItem('access');
+    if (token) {
+      const login = document.getElementById('nav-login');
+      const signup = document.getElementById('nav-signup');
+      const profile = document.getElementById('nav-profile');
+      const dashboard = document.getElementById('nav-dashboard');
+
+      if (login) login.classList.add('d-none');
+      if (signup) signup.classList.add('d-none');
+      if (profile) profile.classList.remove('d-none');
+      if (dashboard) dashboard.classList.remove('d-none');
+
+      fetch('http://127.0.0.1:8000/api/auth/me/', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+        .then(r => r.json())
+        .then(u => {
+          const b = document.getElementById('nav-initials');
+          if (b && u?.username) {
+            b.textContent = (u.username[0] || 'U').toUpperCase();
+          }
+        }).catch(() => {});
+    }
+  })();
+</script>
+
+</body>
+</html>

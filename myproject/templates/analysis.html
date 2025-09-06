@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-3">Dataset Analysis</h2>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <h5>Feature Comparison (Train vs Test)</h5>
+      <canvas id="featureChart"></canvas>
+    </div>
+    <div class="col-md-6">
+      <h5>ROC Curves (One-vs-Rest)</h5>
+      <canvas id="rocChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // ---- Ingest JSON from Django (already valid JS) ----
+  const FEATURES    = {{ features_json|safe }};
+  const TRAIN_MEANS = {{ train_means_json|safe }};
+  const TEST_MEANS  = {{ test_means_json|safe }};
+  const ROC_DATA    = {{ roc_data_json|safe }};
+
+  // ---- Feature Comparison Bar ----
+  new Chart(document.getElementById('featureChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: FEATURES,
+      datasets: [
+        { label: 'Train', data: TRAIN_MEANS },
+        { label: 'Test',  data: TEST_MEANS  }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  // ---- ROC Curves (line with {x,y} points) ----
+  const rocDatasets = [];
+  let idx = 0;
+  for (const label in ROC_DATA) {
+    const points = ROC_DATA[label].fpr.map((f, i) => ({ x: f, y: ROC_DATA[label].tpr[i] }));
+    rocDatasets.push({
+      label: `Class ${label} (AUC=${ROC_DATA[label].auc})`,
+      data: points,
+      fill: false,
+      tension: 0.1
+    });
+    idx++;
+  }
+
+  new Chart(document.getElementById('rocChart').getContext('2d'), {
+    type: 'line',
+    data: { datasets: rocDatasets },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } },
+      parsing: false, // important: we already provide {x,y}
+      scales: {
+        x: { type: 'linear', min: 0, max: 1, title: { display: true, text: 'False Positive Rate' } },
+        y: { min: 0, max: 1, title: { display: true, text: 'True Positive Rate' } }
+      }
+    }
+  });
+</script>
+{% endblock %}

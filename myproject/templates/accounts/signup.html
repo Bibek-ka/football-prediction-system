@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="card shadow-lg p-4" style="max-width: 500px; width: 100%;">
+        <div class="text-center mb-4">
+            <h2>Create Your Account</h2>
+            <p>Join the Football Match Prediction System today!</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-success w-100 btn-lg mt-3">Sign Up</button>
+        </form>
+        <p class="mt-3 text-center">
+            Already have an account? <a href="{% url 'login' %}">Login here</a>
+        </p>
+    </div>
+</div>
+
+<!-- Optional background styling -->
+<style>
+body {
+    background: linear-gradient(to right, #1f4037, #99f2c8);
+}
+.card {
+    border-radius: 15px;
+}
+</style>
+{% endblock %}
